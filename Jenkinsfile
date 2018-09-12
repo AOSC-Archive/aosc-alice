@@ -9,7 +9,8 @@ def gen_stage(env) {
   return {
     stage('create-' + env + '-image') {
       node {
-        sh 'update-tarball.sh amd64 ' + env
+        git branch: 'master', url: 'https://github.com/liushuyu/aosc-alice'
+        sh './update-tarball.sh amd64 ' + env
         archiveArtifacts allowEmptyArchive: false, artifacts: 'dist/**', onlyIfSuccessful: true
         cleanWs()
       }
