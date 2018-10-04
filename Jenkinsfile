@@ -1,6 +1,6 @@
-def variants = ['stub']
+def variants = ['stub', 'container', 'base', 'buildkit']
 // uncomment below for future usage
-// def variants = ['stub', 'container', 'base', 'buildkit']
+// def arch = ['amd64', 'armel', 'arm64', 'ppc', 'ppc64']
 def envMap = variants.collectEntries {
     ["${it}": gen_stage(it)]
 }
