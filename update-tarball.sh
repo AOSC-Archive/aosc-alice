@@ -38,7 +38,7 @@ EOF
 
 sed -i "s/%var%/$2/g" t.pl
 
-TARBALL_NAME=$(curl -s "https://repo.aosc.io/aosc-os/os-$1/${VARIANT_FOLDER}/" | perl t.pl | sort | tail -n1)
+TARBALL_NAME=$(curl -s "https://releases.aosc.io/os-$1/${VARIANT_FOLDER}/" | perl t.pl | sort | tail -n1)
 if [[ "x${TARBALL_NAME}" == 'x' ]]; then
   echo 'Cannot find latest tarball'
   exit 1
