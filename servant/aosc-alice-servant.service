@@ -1,0 +1,8 @@
+[Unit]
+Description=Servant builder service for AOSC ALICE
+
+[Service]
+EnvironmentFile=/usr/share/jenkins-servant/config
+ExecStart=/bin/bash -c "java -jar /usr/share/jenkins-servant/agent.jar -jnlpUrl ${JNLP_URL} -secret ${TOKEN} -workDir ${WORKDIR} -failIfWorkDirIsMissing"
+RestartSec=45s
+Restart=on-failure
