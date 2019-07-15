@@ -31,14 +31,15 @@ if [[ "$1" == arm* && "$2" == 'base' ]]; then
 fi
 
 cat << 'EOF' > t.pl
-my $regex = qr/\/aosc-os_%var%_\d{8}(?>_amd64)?\.tar\.(?>gz|xz)/mp;
-@matches = <STDIN> =~ /$regex/g;
+use strict;
+my $regex = qr/aosc-os_%var%_\d{8}(?>_amd64)?\.tar\.(?>gz|xz)/mp;
+my @matches = <STDIN> =~ /$regex/g;
 foreach my $match (@matches) {print "$match\n"};
 EOF
 
 sed -i "s/%var%/$2/g" t.pl
 
-TARBALL_NAME=$(curl -s "https://releases.aosc.io/os-$1/${VARIANT_FOLDER}/" | perl t.pl | sort | tail -n1)
+TARBALL_NAME=$(curl -s "https://releases.aosc.io/os-$1/${VARIANT_FOLDER}/" | perl -n t.pl | sort | tail -n1)
 if [[ "x${TARBALL_NAME}" == 'x' ]]; then
   echo 'Cannot find latest tarball'
   exit 1
