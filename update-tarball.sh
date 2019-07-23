@@ -53,8 +53,8 @@ TARBALL_PATH="$(readlink -f ${TARBALL_NAME})"
 pushd "${TMPDIR}"
 ${SUDO} ciel init
 ${SUDO} ciel load-os "${TARBALL_PATH}"
-${SUDO} ciel add __release__
-${SUDO} ciel shell -i __release__ -n 'export DEBIAN_FRONTEND=noninteractive; apt-get -y update && for i in {0..5}; do apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" full-upgrade && break || apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" install -f; done'
+${SUDO} ciel add ciel--release--
+${SUDO} ciel shell -i ciel--release-- -n 'export DEBIAN_FRONTEND=noninteractive; apt-get -y update && for i in {0..5}; do apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" full-upgrade && break || apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" install -f; done'
 if [[ "$?" != '0' ]]; then
   echo '[!] Tarball refresh process failed. Bailing out.'
   exit 1
