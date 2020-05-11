@@ -15,6 +15,11 @@ function cleanup {
   fi
 }
 
+function show_debootstrap_log {
+  tail -n50 "${TMPDIR}/.ciel/container/dist/debootstrap/debootstrap.log"
+  exit 2
+}
+
 function patch_debootstrap {
   echo 'Patching debootstrap...'
   wget "$AOSC_RECIPE_URL" -O 'aosc'
@@ -44,7 +49,7 @@ TMPDIR="$(mktemp -d -p $PWD)"
 pushd "${TMPDIR}"
 ${SUDO} ciel init
 # bootstrap
-${SUDO} debootstrap --arch="$1" stable .ciel/container/dist/ 'https://cf-repo.aosc.io/debs/' aosc
+${SUDO} debootstrap --arch="$1" stable .ciel/container/dist/ 'https://cf-repo.aosc.io/debs/' aosc || show_debootstrap_log
 ${SUDO} ciel generate "$2"
 if [[ "$?" != '0' ]]; then
   echo '[!] Tarball refresh process failed. Bailing out.'
