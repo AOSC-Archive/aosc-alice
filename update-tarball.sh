@@ -4,6 +4,8 @@
 
 set -e
 
+AOSC_RECIPE_URL='https://cdn.jsdelivr.net/gh/AOSC-Dev/scriptlets@master/debootstrap/aosc'
+
 function cleanup {
   if [[ "x$TMPDIR" != 'x' ]]; then
     pushd "$TMPDIR"
@@ -11,7 +13,12 @@ function cleanup {
     rm -rf "${TMPDIR}"
     popd
   fi
-  rm t.pl
+}
+
+function patch_debootstrap {
+  echo 'Patching debootstrap...'
+  wget "$AOSC_RECIPE_URL" -O 'aosc'
+  ${SUDO} mv 'aosc' '/usr/share/debootstrap/scripts/aosc'
 }
 
 SUDO=''
@@ -24,37 +31,21 @@ if ! which ciel; then
   exit 1
 fi
 
-trap cleanup EXIT
-VARIANT_FOLDER="$2"
-if [[ "$1" == arm* && "$2" == 'base' ]]; then
-    VARIANT_FOLDER='generic'
-fi
-
-cat << 'EOF' > t.pl
-use strict;
-my $regex = qr/aosc-os_%var%_\d{8}(?>_amd64)?\.tar\.(?>gz|xz)/mp;
-my @matches = <STDIN> =~ /$regex/g;
-foreach my $match (@matches) {print "$match\n"};
-EOF
-
-sed -i "s/%var%/$2/g" t.pl
-
-TARBALL_NAME=$(curl -s "https://releases.aosc.io/os-$1/${VARIANT_FOLDER}/" | perl -n t.pl | sort | tail -n1)
-if [[ "x${TARBALL_NAME}" == 'x' ]]; then
-  echo 'Cannot find latest tarball'
+if ! which debootstrap; then
+  echo 'debootstrap needs to be present in $PATH'
   exit 1
 fi
-echo "Downloading ${TARBALL_NAME}..."
-wget -c -q "https://repo.aosc.io/aosc-os/os-$1/${VARIANT_FOLDER}/${TARBALL_NAME}"
+
+trap cleanup EXIT
+
+[ -f '/usr/share/debootstrap/scripts/aosc' ] || patch_debootstrap
 
 TMPDIR="$(mktemp -d -p $PWD)"
-TARBALL_NAME="$(basename ${TARBALL_NAME})"
-TARBALL_PATH="$(readlink -f ${TARBALL_NAME})"
 pushd "${TMPDIR}"
 ${SUDO} ciel init
-${SUDO} ciel load-os "${TARBALL_PATH}"
-${SUDO} ciel add ciel--release--
-${SUDO} ciel shell -i ciel--release-- -n 'export DEBIAN_FRONTEND=noninteractive; apt-get -y update && for i in {0..5}; do apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" full-upgrade && break || apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" install -f; done'
+# bootstrap
+${SUDO} debootstrap --arch="$1" stable .ciel/container/dist/ 'https://cf-repo.aosc.io/debs/' aosc
+${SUDO} ciel generate "$2"
 if [[ "$?" != '0' ]]; then
   echo '[!] Tarball refresh process failed. Bailing out.'
   exit 1

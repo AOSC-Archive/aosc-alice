@@ -1,4 +1,5 @@
-def variants = ['stub', 'container', 'base', 'buildkit', 'i3wm', 'gnome', 'kde', 'lxde', 'xfce', 'mate', 'cinnamon']
+// def variants = ['stub', 'container', 'base', 'buildkit', 'i3wm', 'gnome', 'kde', 'lxde', 'xfce', 'mate', 'cinnamon']
+def variants = ['container', 'base', 'buildkit']
 // uncomment below for future usage
 // def arch = ['amd64', 'armel', 'arm64', 'ppc', 'ppc64']
 def envMap = variants.collectEntries {
