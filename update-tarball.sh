@@ -4,7 +4,7 @@
 
 set -e
 
-AOSC_RECIPE_URL='https://cdn.jsdelivr.net/gh/AOSC-Dev/scriptlets@master/debootstrap/aosc'
+AOSC_RECIPE_URL='https://cdn.jsdelivr.net/gh/AOSC-Dev/scriptlets@5865163/aoscbootstrap/aoscbootstrap.pl'
 
 function cleanup {
   if [[ "x$TMPDIR" != 'x' ]]; then
@@ -15,15 +15,11 @@ function cleanup {
   fi
 }
 
-function show_debootstrap_log {
-  tail -n50 "${TMPDIR}/.ciel/container/dist/debootstrap/debootstrap.log"
-  exit 2
-}
-
-function patch_debootstrap {
-  echo 'Patching debootstrap...'
-  wget "$AOSC_RECIPE_URL" -O 'aosc'
-  ${SUDO} mv 'aosc' '/usr/share/debootstrap/scripts/aosc'
+function download_absp {
+  echo 'Downloading AOSCBootstrap script...'
+  wget "$AOSC_RECIPE_URL" -O 'aoscbootstrap'
+  ${SUDO} mv 'aoscbootstrap' '/usr/local/bin/aoscbootstrap'
+  ${SUDO} chmod a+x '/usr/local/bin/aoscbootstrap'
 }
 
 SUDO=''
@@ -36,20 +32,17 @@ if ! which ciel; then
   exit 1
 fi
 
-if ! which debootstrap; then
-  echo 'debootstrap needs to be present in $PATH'
-  exit 1
+if ! which aoscbootstrap; then
+  download_absp
 fi
 
 trap cleanup EXIT
-
-[ -f '/usr/share/debootstrap/scripts/aosc' ] || patch_debootstrap
 
 TMPDIR="$(mktemp -d -p $PWD)"
 pushd "${TMPDIR}"
 ${SUDO} ciel init
 # bootstrap
-${SUDO} debootstrap --arch="$1" stable .ciel/container/dist/ 'https://cf-repo.aosc.io/debs/' aosc || show_debootstrap_log
+${SUDO} aoscbootstrap --arch="$1" stable .ciel/container/dist/ 'https://aosc-repo.freetls.fastly.net/debs/'
 ${SUDO} ciel generate "$2"
 if [[ "$?" != '0' ]]; then
   echo '[!] Tarball refresh process failed. Bailing out.'
