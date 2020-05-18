@@ -4,7 +4,9 @@
 
 set -e
 
-AOSC_RECIPE_URL='https://cdn.jsdelivr.net/gh/AOSC-Dev/scriptlets@5865163/aoscbootstrap/aoscbootstrap.pl'
+AOSC_RECIPE_URL='https://github.com/AOSC-Dev/aoscbootstrap'
+SCRIPT_DIR=''
+MIRROR='https://aosc-repo.freetls.fastly.net/debs/'
 
 function cleanup {
   if [[ "x$TMPDIR" != 'x' ]]; then
@@ -16,10 +18,13 @@ function cleanup {
 }
 
 function download_absp {
-  echo 'Downloading AOSCBootstrap script...'
-  wget "$AOSC_RECIPE_URL" -O 'aoscbootstrap'
-  ${SUDO} mv 'aoscbootstrap' '/usr/local/bin/aoscbootstrap'
-  ${SUDO} chmod a+x '/usr/local/bin/aoscbootstrap'
+  echo 'Downloading AOSCBootstrap...'
+  git clone --depth=5 "${AOSC_RECIPE_URL}" 'aoscbootstrap'
+  SCRIPT_DIR="$(pwd)/aoscbootstrap/"
+}
+
+function convert_script {
+  perl "${SCRIPT_DIR}/recipes/convert.pl" '/usr/libexec/ciel-plugin/ciel-generate' "${SCRIPT_DIR}/recipes"
 }
 
 SUDO=''
@@ -32,9 +37,8 @@ if ! which ciel; then
   exit 1
 fi
 
-if ! which aoscbootstrap; then
-  download_absp
-fi
+download_absp && convert_script
+[ "$(hostname)" == 'bakeneko.door.local' ] && MIRROR='http://192.168.1.99/debs/'
 
 trap cleanup EXIT
 
@@ -42,12 +46,12 @@ TMPDIR="$(mktemp -d -p $PWD)"
 pushd "${TMPDIR}"
 ${SUDO} ciel init
 # bootstrap
-${SUDO} aoscbootstrap --arch="$1" stable .ciel/container/dist/ 'https://aosc-repo.freetls.fastly.net/debs/'
-${SUDO} ciel generate "$2"
+${SUDO} ./aoscbootstrap/aoscbootstrap --arch="$1" --include-file="${SCRIPT_DIR}/recipes/$2.lst" stable .ciel/container/dist/ "$MIRROR"
 if [[ "$?" != '0' ]]; then
   echo '[!] Tarball refresh process failed. Bailing out.'
   exit 1
 fi
+${SUDO} ciel add ciel--release--
 ${SUDO} ciel release "$2" 4
 popd
 
