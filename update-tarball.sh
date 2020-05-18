@@ -46,7 +46,7 @@ TMPDIR="$(mktemp -d -p $PWD)"
 pushd "${TMPDIR}"
 ${SUDO} ciel init
 # bootstrap
-${SUDO} ./aoscbootstrap/aoscbootstrap --arch="$1" --include-file="${SCRIPT_DIR}/recipes/$2.lst" stable .ciel/container/dist/ "$MIRROR"
+${SUDO} "${SCRIPT_DIR}/aoscbootstrap.pl" --arch="$1" --include-file="${SCRIPT_DIR}/recipes/$2.lst" stable "$(pwd)/.ciel/container/dist/" "$MIRROR"
 if [[ "$?" != '0' ]]; then
   echo '[!] Tarball refresh process failed. Bailing out.'
   exit 1
