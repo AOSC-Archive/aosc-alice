@@ -19,6 +19,7 @@ function cleanup {
 
 function download_absp {
   echo 'Downloading AOSCBootstrap...'
+  [ -d 'aoscbootstrap' ] && rm -rf 'aoscbootstrap'
   git clone --depth=5 "${AOSC_RECIPE_URL}" 'aoscbootstrap'
   SCRIPT_DIR="$(pwd)/aoscbootstrap/"
 }
