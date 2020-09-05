@@ -40,6 +40,7 @@ fi
 
 download_absp && convert_script
 [ "$(hostname)" == 'bakeneko.door.local' ] && MIRROR='http://192.168.1.99/debs/'
+[ "$(hostname)" == 'Ry3950X' ] && MIRROR='http://localhost/debs/'
 
 trap cleanup EXIT
 
