@@ -39,7 +39,7 @@ if ! which ciel; then
 fi
 
 download_absp && convert_script
-[ "$(hostname)" == 'bakeneko.door.local' ] && MIRROR='http://192.168.1.99/debs/'
+[ "$(hostname)" == 'bakeneko.door.local' ] && MIRROR='http://192.168.1.20/mirror/debs/'
 [ "$(hostname)" == 'Ry3950X' ] && MIRROR='http://localhost/debs/'
 
 trap cleanup EXIT

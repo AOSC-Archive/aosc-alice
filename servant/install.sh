@@ -75,6 +75,7 @@ cat << EOF > '/usr/share/jenkins-servant/config'
 JNLP_URL=${JNLP_URL}
 TOKEN=${TOKEN}
 WORKDIR=${WORKDIR}
+TERM=xterm
 EOF
 
 echo '[+] Setting up permission for work dir...'
