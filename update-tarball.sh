@@ -2,7 +2,7 @@
 # $1: arch
 # $2: variant
 
-set -e
+set -eE
 
 MIRROR='https://aosc-repo.freetls.fastly.net/debs/'
 VARIANT="$2"
@@ -37,7 +37,6 @@ if [[ "x$(id --user)" != 'x0' ]]; then
   SUDO='sudo'
 fi
 
-convert_script
 [ "$(hostname)" == 'bakeneko.door.local' ] && MIRROR='https://cth-desktop-dorm.mad.wi.cth451.me/debs'
 [ "$(hostname)" == 'Ry3950X' ] && MIRROR='http://localhost/debs/'
 
@@ -45,6 +44,7 @@ trap cleanup EXIT
 
 TMPDIR="$(mktemp -d -p $PWD)"
 pushd "${TMPDIR}"
+convert_script
 # bootstrap
 ${SUDO} "aoscbootstrap" stable "$(pwd)/dist" "$MIRROR" -a "$1" -c '/usr/share/aoscbootstrap/config/aosc-mainline.toml' -x -f "recipes/$VARIANT.lst"
 if [[ "$?" != '0' ]]; then
