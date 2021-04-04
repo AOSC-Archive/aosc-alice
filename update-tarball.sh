@@ -22,7 +22,7 @@ function convert_script {
 function compress_tarball {
   XZ_PARAM="-9 -e --lzma2=preset=9e,nice=273"
   DATE="$(TZ=UTC date +'%Y%m%d')"
-  ARCH="$(chroot "$(pwd)/dist" -- /usr/bin/dpkg-architecture -qDEB_BUILD_ARCH | dos2unix)"
+  ARCH="$(chroot "$(pwd)/dist" /usr/bin/dpkg-architecture -qDEB_BUILD_ARCH | dos2unix)"
   TARBALL=aosc-os_${VARIANT}_"${DATE}"_"${ARCH}".tar.xz
   COMPRESSOR="xz $XZ_PARAM -T $XZ_THREADS"
 
@@ -38,7 +38,7 @@ if [[ "x$(id --user)" != 'x0' ]]; then
 fi
 
 [ "$(hostname)" == 'bakeneko.door.local' ] && MIRROR='https://cth-desktop-dorm.mad.wi.cth451.me/debs'
-[ "$(hostname)" == 'Ry3950X' ] && MIRROR='http://localhost/debs/'
+[ "$(hostname)" == 'Ry3950X' ] && XZ_THREADS='8' && MIRROR='http://localhost/debs/'
 
 trap cleanup EXIT
 
