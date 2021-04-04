@@ -10,7 +10,7 @@ XZ_THREADS='4'
 
 function cleanup {
   if [[ "x$TMPDIR" != 'x' ]]; then
-    rm -rf "${TMPDIR}"
+    ${SUDO} rm -rf "${TMPDIR}"
   fi
 }
 
@@ -37,11 +37,6 @@ if [[ "x$(id --user)" != 'x0' ]]; then
   SUDO='sudo'
 fi
 
-if ! which ciel; then
-  echo 'CIEL! needs to be present in $PATH'
-  exit 1
-fi
-
 convert_script
 [ "$(hostname)" == 'bakeneko.door.local' ] && MIRROR='https://cth-desktop-dorm.mad.wi.cth451.me/debs'
 [ "$(hostname)" == 'Ry3950X' ] && MIRROR='http://localhost/debs/'
@@ -51,7 +46,7 @@ trap cleanup EXIT
 TMPDIR="$(mktemp -d -p $PWD)"
 pushd "${TMPDIR}"
 # bootstrap
-${SUDO} "aoscbootstrap" stable "$(pwd)/dist" "$MIRROR" -a "$1" -c '/usr/share/aoscbootstrap/config/aosc-mainline.toml' -x -f "${TMPDIR}/recipes/$VARIANT.lst"
+${SUDO} "aoscbootstrap" stable "$(pwd)/dist" "$MIRROR" -a "$1" -c '/usr/share/aoscbootstrap/config/aosc-mainline.toml' -x -f "recipes/$VARIANT.lst"
 if [[ "$?" != '0' ]]; then
   echo '[!] Tarball refresh process failed. Bailing out.'
   exit 1
