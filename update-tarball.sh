@@ -4,28 +4,32 @@
 
 set -e
 
-AOSC_RECIPE_URL='https://github.com/AOSC-Dev/aoscbootstrap'
-SCRIPT_DIR=''
 MIRROR='https://aosc-repo.freetls.fastly.net/debs/'
+VARIANT="$2"
+XZ_THREADS='4'
 
 function cleanup {
   if [[ "x$TMPDIR" != 'x' ]]; then
-    pushd "$TMPDIR"
-    echo 'yes' | ${SUDO} ciel farewell
     rm -rf "${TMPDIR}"
-    popd
   fi
 }
 
-function download_absp {
-  echo 'Downloading AOSCBootstrap...'
-  [ -d 'aoscbootstrap' ] && rm -rf 'aoscbootstrap'
-  git clone --depth=5 "${AOSC_RECIPE_URL}" 'aoscbootstrap'
-  SCRIPT_DIR="$(pwd)/aoscbootstrap/"
+function convert_script {
+  mkdir -p "${TMPDIR}/recipes"
+  perl "/usr/share/aoscbootstrap/recipes/convert.pl" '/usr/libexec/ciel-plugin/ciel-generate' "${TMPDIR}/recipes"
 }
 
-function convert_script {
-  perl "${SCRIPT_DIR}/recipes/convert.pl" '/usr/libexec/ciel-plugin/ciel-generate' "${SCRIPT_DIR}/recipes"
+function compress_tarball {
+  XZ_PARAM="-9 -e --lzma2=preset=9e,nice=273"
+  DATE="$(TZ=UTC date +'%Y%m%d')"
+  ARCH="$(chroot "$(pwd)/dist" -- /usr/bin/dpkg-architecture -qDEB_BUILD_ARCH | dos2unix)"
+  TARBALL=aosc-os_${VARIANT}_"${DATE}"_"${ARCH}".tar.xz
+  COMPRESSOR="xz $XZ_PARAM -T $XZ_THREADS"
+
+  pushd "$(pwd)/dist"
+  tar cf - * | $COMPRESSOR > "$TMPDIR/$TARBALL" || exit $?
+  sha256sum "$TMPDIR/$TARBALL" > "$TMPDIR/$TARBALL".sha256sum || exit $?
+  popd
 }
 
 SUDO=''
@@ -39,22 +43,20 @@ if ! which ciel; then
 fi
 
 download_absp && convert_script
-[ "$(hostname)" == 'bakeneko.door.local' ] && MIRROR='http://192.168.1.20/mirror/debs/'
+[ "$(hostname)" == 'bakeneko.door.local' ] && MIRROR='https://cth-desktop-dorm.mad.wi.cth451.me/debs'
 [ "$(hostname)" == 'Ry3950X' ] && MIRROR='http://localhost/debs/'
 
 trap cleanup EXIT
 
 TMPDIR="$(mktemp -d -p $PWD)"
 pushd "${TMPDIR}"
-${SUDO} ciel init
 # bootstrap
-${SUDO} "${SCRIPT_DIR}/aoscbootstrap.pl" --arch="$1" --include-file="${SCRIPT_DIR}/recipes/$2.lst" stable "$(pwd)/.ciel/container/dist/" "$MIRROR"
+${SUDO} "aoscbootstrap" stable "$(pwd)/dist" "$MIRROR" -a "$1" -c '/usr/share/aoscbootstrap/config/aosc-mainline.toml' -x -f "${TMPDIR}/recipes/$VARIANT.lst"
 if [[ "$?" != '0' ]]; then
   echo '[!] Tarball refresh process failed. Bailing out.'
   exit 1
 fi
-${SUDO} ciel add ciel--release--
-${SUDO} ciel release "$2" 4
+compress_tarball
 popd
 
 rm -rf dist || true
