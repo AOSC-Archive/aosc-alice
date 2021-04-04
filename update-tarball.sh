@@ -42,7 +42,7 @@ if ! which ciel; then
   exit 1
 fi
 
-download_absp && convert_script
+convert_script
 [ "$(hostname)" == 'bakeneko.door.local' ] && MIRROR='https://cth-desktop-dorm.mad.wi.cth451.me/debs'
 [ "$(hostname)" == 'Ry3950X' ] && MIRROR='http://localhost/debs/'
 
