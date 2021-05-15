@@ -4,23 +4,56 @@ warn(){ echo -e "[\e[33mWARN\e[0m]: \e[1m$*\e[0m" >&2; }
 err(){ echo -e "[\e[31mERROR\e[0m]: \e[1m$*\e[0m" >&2; }
 info(){ echo -e "[\e[96mINFO\e[0m]: \e[1m$*\e[0m" >&2; }
 
-function partition_gpt() {
-    sgdisk -n1:0:131072 empty.img
-    sgdisk -t1:ef00 empty.img
-    sgdisk -N2 empty.img
+_help_message() {
+    printf "\
+Usage:
+
+	create-vm-image.sh TARBALL IMG_NAME IMG_SIZE
+
+	- TARBALL: AOSC OS tarball from which to create VM disk image.
+	- IMG_NAME: Output VM disk image file name.
+	- IMG_SIZE: Size of VM disk image (defaults to "16G").
+
+"
 }
 
-function mkfs_gpt() {
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    _help_message
+    exit 0
+fi
+
+if [ -z "$1" ]; then
+   err "Please specify a tarball!\n"
+   _help_message
+   exit 1
+fi
+
+if [ -z "$2" ]; then
+   err "Please specify a file name for your VM disk image!\n"
+   _help_message
+   exit 1
+fi
+
+partition_gpt() {
+    # Create an 128MiB partition for ESP.
+    sgdisk -n1:0:131072 $2
+    # Setting partition type to "EFI System."
+    sgdisk -t1:ef00 $2
+    # Creating a system root partition with the rest of available free space.
+    sgdisk -N2 $2
+}
+
+mkfs_gpt() {
     mkfs.vfat "${LOOP_DEV}p1"
     mkfs.ext4 "${LOOP_DEV}p2"
 }
 
-function bootloader_efi() {
+bootloader_efi() {
     systemd-nspawn --bind "${LOOP_DEV}p1":"${LOOP_DEV}p1" --bind "${LOOP_DEV}p2":"${LOOP_DEV}p2" --bind "${LOOP_DEV}":"${LOOP_DEV}" -D "${TMP_MNT}" /usr/bin/bash -c "mount ${LOOP_DEV}p1 /efi && grub-install --target=x86_64-efi --bootloader-id=AOSC-GRUB --efi-directory=/efi --removable && grub-mkconfig -o /boot/grub/grub.cfg"
     sed -i "s|${LOOP_DEV}p2|/dev/sda2|g" "${TMP_MNT}/boot/grub/grub.cfg"
 }
 
-function unmount() {
+unmount() {
     # info 'Shutting down container (if any)...'
     # machinectl terminate 'tmp-container' || true
     info 'Unmounting filesystems...'
@@ -32,7 +65,7 @@ function unmount() {
 }
 
 info 'Creating a blank image...'
-qemu-img create -f raw empty.img 10G
+qemu-img create -f raw $2 ${3:-16G}
 info '... Done'
 
 info 'Creating partitions...'
@@ -40,7 +73,7 @@ partition_gpt
 info '... Done'
 
 info 'Mounting image to system...'
-LOOP_DEV="$(losetup -f --show 'empty.img')"
+LOOP_DEV="$(losetup -f --show '$2')"
 partprobe "${LOOP_DEV}"
 
 info 'Formatting the partitions...'
