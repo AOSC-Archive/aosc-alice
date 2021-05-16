@@ -1,0 +1,17 @@
+[package]
+name = "aosc-test-helper"
+version = "0.1.0"
+authors = ["liushuyu <liushuyu011@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+sailfish = "0.3"
+virt = { git = "https://github.com/libvirt/libvirt-rust/", rev = "6977c6753ffb07a9d07a7be43e58da1c02fa8fbb" }
+uuid = { version = "0.8", features = ["v4"] }
+anyhow = "1.0"
+rand = "0.8"
+tempfile = "3.2"
+argh = "0.1"
+
+[profile.release]
+lto = true
