@@ -6,7 +6,7 @@ mod vm;
 #[derive(FromArgs)]
 /// Small helper program to create a test VM via libvirt
 struct TestHelper {
-    /// size of VM RAM in bytes (optional, default: 1 GB)
+    /// size of VM RAM in KiB (optional, default: 1 GB)
     #[argh(option)]
     ram: Option<usize>,
     /// number of virtual CPUs (optional, default: 2 vCPU)

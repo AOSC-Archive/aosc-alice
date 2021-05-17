@@ -60,7 +60,7 @@
     <sound model="ich6"/>
     <video>
       <model type="virtio">
-        <% if use_gl { %><acceleration accel3d="yes"/><% } %>
+        <acceleration accel3d="yes"/>
       </model>
     </video>
     <redirdev bus="usb" type="spicevmc"/>
