@@ -49,8 +49,21 @@ mkfs_gpt() {
 }
 
 bootloader_efi() {
-    systemd-nspawn --bind "${LOOP_DEV}p1":"${LOOP_DEV}p1" --bind "${LOOP_DEV}p2":"${LOOP_DEV}p2" --bind "${LOOP_DEV}":"${LOOP_DEV}" -D "${TMP_MNT}" /usr/bin/bash -c "mkdir -p /efi && mount ${LOOP_DEV}p1 /efi && grub-install --target=x86_64-efi --bootloader-id=AOSC-GRUB --efi-directory=/efi --removable && grub-mkconfig -o /boot/grub/grub.cfg"
-    sed -i "s|${LOOP_DEV}p2|/dev/sda2|g" "${TMP_MNT}/boot/grub/grub.cfg"
+    systemd-nspawn \
+        --bind "${LOOP_DEV}p1":"${LOOP_DEV}p1" \
+        --bind "${LOOP_DEV}p2":"${LOOP_DEV}p2" \
+        --bind "${LOOP_DEV}":"${LOOP_DEV}" \
+        -D "${TMP_MNT}" \
+        /usr/bin/bash \
+            -c "mkdir -p /efi && \
+            mount ${LOOP_DEV}p1 /efi && \
+            grub-install \
+                --target=x86_64-efi \
+                --bootloader-id=AOSC-GRUB \
+                --efi-directory=/efi \
+                --removable && \
+            grub-mkconfig -o /boot/grub/grub.cfg"
+    sed -i "s|${LOOP_DEV}p2|/dev/vda2|g" "${TMP_MNT}/boot/grub/grub.cfg"
 }
 
 unmount() {
@@ -93,7 +106,12 @@ tar --numeric-owner -pxvf "$1" -C "${TMP_MNT}"
 info '... Done'
 
 info 'Running dracut...'
-systemd-nspawn --bind "${LOOP_DEV}p1":"${LOOP_DEV}p1" --bind "${LOOP_DEV}p2":"${LOOP_DEV}p2" --bind "${LOOP_DEV}":"${LOOP_DEV}" -D "${TMP_MNT}" /usr/bin/update-initramfs
+systemd-nspawn \
+    --bind "${LOOP_DEV}p1":"${LOOP_DEV}p1" \
+    --bind "${LOOP_DEV}p2":"${LOOP_DEV}p2" \
+    --bind "${LOOP_DEV}":"${LOOP_DEV}" \
+    -D "${TMP_MNT}" \
+    /usr/bin/update-initramfs
 info '... Done'
 
 info 'Writing bootloader...'
