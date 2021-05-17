@@ -118,3 +118,19 @@ info 'Writing bootloader...'
 sed -i 's,\(GRUB_CMDLINE_LINUX_DEFAULT=".*\)"$,\1 console=ttyS0\,115200",g' "${TMP_MNT}/etc/default/grub"
 bootloader_efi
 info '... Done'
+
+info 'Creating user and setting password...'
+systemd-nspawn \
+    --bind "${LOOP_DEV}p1":"${LOOP_DEV}p1" \
+    --bind "${LOOP_DEV}p2":"${LOOP_DEV}p2" \
+    --bind "${LOOP_DEV}":"${LOOP_DEV}" \
+    -D "${TMP_MNT}" \
+    /usr/bin/useradd test -m
+systemd-nspawn \
+    --bind "${LOOP_DEV}p1":"${LOOP_DEV}p1" \
+    --bind "${LOOP_DEV}p2":"${LOOP_DEV}p2" \
+    --bind "${LOOP_DEV}":"${LOOP_DEV}" \
+    -D "${TMP_MNT}" \
+    /usr/bin/usermod -a -G audio,cdrom,video,wheel test
+echo 'test:anthon' | chpasswd -c SHA512 -R "${TMP_MNT}"
+echo 'root:anthon' | chpasswd -c SHA512 -R "${TMP_MNT}"
