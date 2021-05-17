@@ -5,7 +5,7 @@
   <currentMemory><%= memory %></currentMemory>
   <vcpu><%= vcpu %></vcpu>
   <os>
-    <type arch="x86_64" machine="pc-i440fx-6.0">hvm</type>
+    <type arch="x86_64" machine="pc">hvm</type>
     <loader readonly="yes" type="pflash">/usr/share/qemu/edk2-x86_64-code.fd</loader>
     <nvram><%= nvram %></nvram>
     <boot dev="hd"/>
@@ -30,7 +30,7 @@
     <disk type="file" device="disk">
       <driver name="qemu" type="raw"/>
       <source file="<%- image_path %>"/>
-      <target dev="hda" bus="ide"/>
+      <target dev="vda" bus="virtio"/>
     </disk>
     <controller type="usb" model="ich9-ehci1"/>
     <controller type="usb" model="ich9-uhci1">
@@ -60,7 +60,7 @@
     <sound model="ich6"/>
     <video>
       <model type="virtio">
-        <acceleration accel3d="yes"/>
+        <% if use_gl { %><acceleration accel3d="yes"/><% } %>
       </model>
     </video>
     <redirdev bus="usb" type="spicevmc"/>
