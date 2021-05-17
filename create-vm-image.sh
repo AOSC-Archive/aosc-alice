@@ -36,11 +36,11 @@ fi
 
 partition_gpt() {
     # Create an 128MiB partition for ESP.
-    sgdisk -n1:0:131072 $2
+    sgdisk -n1:0:131072 "$1"
     # Setting partition type to "EFI System."
-    sgdisk -t1:ef00 $2
+    sgdisk -t1:ef00 "$1"
     # Creating a system root partition with the rest of available free space.
-    sgdisk -N2 $2
+    sgdisk -N2 "$1"
 }
 
 mkfs_gpt() {
@@ -49,7 +49,7 @@ mkfs_gpt() {
 }
 
 bootloader_efi() {
-    systemd-nspawn --bind "${LOOP_DEV}p1":"${LOOP_DEV}p1" --bind "${LOOP_DEV}p2":"${LOOP_DEV}p2" --bind "${LOOP_DEV}":"${LOOP_DEV}" -D "${TMP_MNT}" /usr/bin/bash -c "mount ${LOOP_DEV}p1 /efi && grub-install --target=x86_64-efi --bootloader-id=AOSC-GRUB --efi-directory=/efi --removable && grub-mkconfig -o /boot/grub/grub.cfg"
+    systemd-nspawn --bind "${LOOP_DEV}p1":"${LOOP_DEV}p1" --bind "${LOOP_DEV}p2":"${LOOP_DEV}p2" --bind "${LOOP_DEV}":"${LOOP_DEV}" -D "${TMP_MNT}" /usr/bin/bash -c "mkdir -p /efi && mount ${LOOP_DEV}p1 /efi && grub-install --target=x86_64-efi --bootloader-id=AOSC-GRUB --efi-directory=/efi --removable && grub-mkconfig -o /boot/grub/grub.cfg"
     sed -i "s|${LOOP_DEV}p2|/dev/sda2|g" "${TMP_MNT}/boot/grub/grub.cfg"
 }
 
@@ -69,11 +69,11 @@ qemu-img create -f raw $2 ${3:-16G}
 info '... Done'
 
 info 'Creating partitions...'
-partition_gpt
+partition_gpt $2
 info '... Done'
 
 info 'Mounting image to system...'
-LOOP_DEV="$(losetup -f --show '$2')"
+LOOP_DEV="$(losetup -f --show "$2")"
 partprobe "${LOOP_DEV}"
 
 info 'Formatting the partitions...'
@@ -89,11 +89,11 @@ mount -t ext4 "${LOOP_DEV}p2" "${TMP_MNT}"
 info '... Done'
 
 info 'Decompressing tarball...'
-tar xf "$1" -C "${TMP_MNT}"
+tar --numeric-owner -pxvf "$1" -C "${TMP_MNT}"
 info '... Done'
 
 info 'Running dracut...'
-systemd-nspawn --bind "${LOOP_DEV}p1":"${LOOP_DEV}p1" --bind "${LOOP_DEV}p2":"${LOOP_DEV}p2" --bind "${LOOP_DEV}":"${LOOP_DEV}" -D "${TMP_MNT}" /usr/bin/bash /var/ab/triggered/dracut
+systemd-nspawn --bind "${LOOP_DEV}p1":"${LOOP_DEV}p1" --bind "${LOOP_DEV}p2":"${LOOP_DEV}p2" --bind "${LOOP_DEV}":"${LOOP_DEV}" -D "${TMP_MNT}" /usr/bin/update-initramfs
 info '... Done'
 
 info 'Writing bootloader...'
